@@ -7,6 +7,10 @@
  * file that was distributed with this source code.
  */
 
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Exception\IOException;
+use Symfony\Component\Finder\Finder;
+
 /**
  * In this file we store all generic functions that we will be using in the galleria module
  *
@@ -603,17 +607,24 @@ class BackendGalleriaModel
 			//--Get folders
 			$folders = BackendModel::getThumbnailFolders(FRONTEND_FILES_PATH . '/galleria/images', true);
 
-			//--Loop the folders
-			foreach($folders as $folder)
-			{
-				//--Delete the image
-				SpoonFile::delete($folder['url'] . '/' . $folder['dirname'] . '/' . $image['filename']);
-			}
+			$finder = new Finder();
+			$fs = new Filesystem();
 
-			//--Delete images from the database
-			BackendModel::getContainer()->get('database')->delete("galleria_images", "id=?", array($id));
+			foreach($finder->directories()->in(FRONTEND_FILES_PATH . '/galleria/images') as $directory)
+			{
+
+				$fileName = $directory->getRealPath() . '/' . $image['filename'];
+				if(is_file($fileName))
+				{
+					$fs->remove($fileName);
+				}
+			}
 		}
+
+		//--Delete images from the database
+		BackendModel::getContainer()->get('database')->delete("galleria_images", "id=?", array($id));
 	}
+
 
 	/**
 	 * Build the filename
