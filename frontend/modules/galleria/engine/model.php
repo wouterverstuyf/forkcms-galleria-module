@@ -50,6 +50,45 @@ class FrontendGalleriaModel
 		return $return;
 	}
 
+
+	public static function getAlbumsForCategory($category)
+	{
+		$return = (array)FrontendModel::getContainer()->get('database')->getRecords('	SELECT i.*, m.url, m.data AS meta_data
+		 														FROM galleria_albums AS i
+																INNER JOIN meta AS m ON m.id = i.meta_id
+																WHERE i.language = ? AND show_in_overview = ?
+																AND i.category_id = ?
+																ORDER BY sequence ASC',
+															array(FRONTEND_LANGUAGE, 'Y', $category));
+
+		if(!empty($return))
+		{
+			//--Get link for the categories
+			$albumLink = FrontendNavigation::getURLForBlock('galleria', 'detail');
+			foreach($return as &$row)
+			{
+
+				//--Create url
+				$row['full_url'] = $albumLink . '/' . $row['url'];
+
+				//-- Unserialize
+				if(isset($row['meta_data'])) $row['meta_data'] = @unserialize($row['meta_data']);
+
+				$image = self::getImagesForAlbum($row['id'], 1);
+				if(!empty($image))
+				{
+					foreach($image as $rowImage)
+					{
+						$row['image'] = $rowImage;
+					}
+				}
+			}
+		}
+
+		return $return;
+	}
+
+
 	public static function getAlbum($url)
 	{
 		$return = (array)FrontendModel::getContainer()->get('database')->getRecord('	SELECT i.*, m.url, m.data AS meta_data
@@ -107,7 +146,7 @@ class FrontendGalleriaModel
 				$row['description'] = nl2br($row['description']);
 				foreach($folders as $folder)
 				{
-					$row['image_' . $folder['dirname']] = $folder['url'] . '/' . $row['filename'];
+					$row['image_' . $folder['dirname']] = $folder['url'] . '/' . $folder['dirname'] . '/' . $row['filename'];
 				}
 			}
 			//--Destroy the last $image (because of the reference) -- sugested by http://php.net/manual/en/control-structures.foreach.php
