@@ -202,9 +202,11 @@ class BackendGalleriaEditAlbum extends BackendBaseActionEdit
 			// no errors?
 			if($this->frm->isCorrect())
 			{
+
 				// first, build the album array
 				$album['id'] = (int)$this->id;
-				$album['extra_id'] = $this->record['extra_id'];
+				$album['extra_id_slideshow'] = $this->record['extra_id_slideshow'];
+				$album['extra_id_gallery'] = $this->record['extra_id_gallery'];
 				$album['title'] = (string)$this->frm->getField('title')->getValue();
 				$album['description'] = (string)$this->frm->getField('description')->getValue();
 				$album['category_id'] = (int)$this->frm->getField('category')->getValue();

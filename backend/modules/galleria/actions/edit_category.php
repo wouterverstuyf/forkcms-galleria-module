@@ -57,7 +57,7 @@ class BackendGalleriaEditCategory extends BackendBaseActionEdit
 	 */
 	private function getData()
 	{
-		$this->record 	= BackendGalleriaModel::getCategoryFromId($this->id);
+		$this->record = BackendGalleriaModel::getCategoryFromId($this->id);
 	}
 
 	/**
@@ -117,19 +117,20 @@ class BackendGalleriaEditCategory extends BackendBaseActionEdit
 			{
 				// first, build the category array
 				$category['id'] = (int) $this->id;
+				$category['extra_id'] = (int) $this->record['extra_id'];
 				$category['title'] = (string) $this->frm->getField('title')->getValue();
 				$category['language'] = (string) BL::getWorkingLanguage();
 				$category['hidden'] = (string) $this->frm->getField('hidden')->getValue();
 
 				// ... then, update the category
 				$category_update = BackendGalleriaModel::updateCategory($category);
-				
+
 				// trigger event
 				BackendModel::triggerEvent($this->getModule(), 'after_edit_category', array('item' => $category));
 
 				// everything is saved, so redirect to the overview
-				$this->redirect(BackendModel::createURLForAction('categories') . '&report=edited-category&var=' . urlencode($category['title']) . '&highlight=row-' . $category['id']);			
-			}	
+				$this->redirect(BackendModel::createURLForAction('categories') . '&report=edited-category&var=' . urlencode($category['title']) . '&highlight=row-' . $category['id']);
+			}
 		}
 	}
 }

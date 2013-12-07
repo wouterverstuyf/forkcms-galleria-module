@@ -24,7 +24,7 @@ class GalleriaInstaller extends ModuleInstaller
 
 		// install the locale, this is set here beceause we need the module for this
 		$this->importLocale(dirname(__FILE__) . '/data/locale.xml');
-		
+
 		// modulerights
 		$this->setModuleRights(1, 'galleria');
 
@@ -43,14 +43,12 @@ class GalleriaInstaller extends ModuleInstaller
 		$this->setActionRights(1, 'galleria', 'settings');
 
 		// add extra's
-		$this->insertExtra('galleria', 'widget', 'Slideshow', 'slideshow');
-		$this->insertExtra('galleria', 'widget', 'Gallery', 'gallery');
 		$galleriaID = $this->insertExtra('galleria', 'block', 'Galleria', null, null, 'N', 1000);
-				
+
 		// module navigation
 		$navigationModulesId = $this->setNavigation(null, 'Modules');
 		$navigationGalleriaId = $this->setNavigation($navigationModulesId, 'Galleria', 'galleria/albums');
-		
+
 		$this->setNavigation($navigationGalleriaId, 'Albums', 'galleria/albums', array(
 				'galleria/add_album',
 				'galleria/edit_album',
@@ -59,18 +57,18 @@ class GalleriaInstaller extends ModuleInstaller
 				'galleria/edit',
 				'galleria/delete'
 		));
-		
+
 		$this->setNavigation($navigationGalleriaId, 'Categories', 'galleria/categories', array(
 				'galleria/add_category',
 				'galleria/edit_category',
 				'galleria/delete_category'
 		));
-		
+
 		// settings navigation
 		$navigationSettingsId = $this->setNavigation(null, 'Settings');
 		$navigationModulesId = $this->setNavigation($navigationSettingsId, 'Modules');
 		$this->setNavigation($navigationModulesId, 'Galleria', 'galleria/settings');
-		
+
 		// loop languages
 		foreach($this->getLanguages() as $language)
 		{

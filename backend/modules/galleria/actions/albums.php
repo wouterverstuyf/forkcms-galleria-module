@@ -48,11 +48,11 @@ class BackendGalleriaAlbums extends BackendBaseAction
 		$this->dataGrid->setPaging(false);
 
 		// set hidden columns
-		$this->dataGrid->setColumnsHidden(array('language','sequence','meta_id','id','category_id','publish_on', 'extra_id'));
-		
+		$this->dataGrid->setColumnsHidden(array('language','sequence','meta_id','id','category_id','publish_on', 'extra_id_slideshow', 'extra_id_gallery'));
+
 		// set column URLs
 		$this->dataGrid->setColumnURL('title', BackendModel::createURLForAction('edit_album') . '&amp;id=[id]');
-		
+
 		// add drag and dropp stuff
 		$this->dataGrid->enableSequenceByDragAndDrop();
 		$this->dataGrid->setAttributes(array('class' => 'dataGrid sequenceByDragAndDrop'));

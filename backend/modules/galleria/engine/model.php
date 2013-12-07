@@ -18,7 +18,7 @@ class BackendGalleriaModel
 	 * Define constants
 	 */
 
-	const QRY_DATAGRID_CAT = 'SELECT i.*
+	const QRY_DATAGRID_CAT = 'SELECT i.title, i.id, i.language, i.sequence, i.meta_id, i.publish_on
 		  FROM galleria_categories AS i
 		  WHERE i.language = ? ORDER BY i.sequence ASC';
 
@@ -69,14 +69,23 @@ class BackendGalleriaModel
 		// get item
 		$item = self::getAlbumFromId($id);
 
-		// build extra
-		$extra = array('id' => $item['extra_id'], 'module' => 'galleria', 'type' => 'widget', 'action' => 'gallery');
+		// build extra gallery
+		$extragallery = array('id' => $item['extra_id_gallery'], 'module' => 'galleria', 'type' => 'widget', 'action' => 'gallery');
 
-		// delete extra
-		$db->delete('modules_extras', 'id = ? AND module = ? AND type = ? AND action = ?', array($extra['id'], $extra['module'], $extra['type'], $extra['action']));
+		// delete extra gallery
+		$db->delete('modules_extras', 'id = ? AND module = ? AND type = ? AND action = ?', array($extragallery['id'], $extragallery['module'], $extragallery['type'], $extragallery['action']));
 
 		// update blocks with this item linked
-		$db->update('pages_blocks', array('extra_id' => null, 'html' => ''), 'extra_id = ?', array($item['extra_id']));
+		$db->update('pages_blocks', array('extra_id' => null, 'html' => ''), 'extra_id = ?', array($item['extra_id_gallery']));
+
+		// build extra slideshow
+		$extraslideshow = array('id' => $item['extra_id_slideshow'], 'module' => 'galleria', 'type' => 'widget', 'action' => 'slideshow');
+
+		// delete extra slideshow
+		$db->delete('modules_extras', 'id = ? AND module = ? AND type = ? AND action = ?', array($extraslideshow['id'], $extraslideshow['module'], $extraslideshow['type'], $extraslideshow['action']));
+
+		// update blocks with this item linked
+		$db->update('pages_blocks', array('extra_id' => null, 'html' => ''), 'extra_id = ?', array($item['extra_id_slideshow']));
 
 		// delete all records
 		$db->delete('galleria_albums', 'id = ? AND language = ?', array($id, BL::getWorkingLanguage()));
@@ -91,8 +100,23 @@ class BackendGalleriaModel
 	 */
 	public static function deleteCategoryById($id)
 	{
+		$id = (int)$id;
+		$db = BackendModel::getContainer()->get('database');
+
+		// get item
+		$item = self::getCategoryFromId($id);
+
+		// build extra
+		$extra = array('id' => $item['extra_id'], 'module' => 'galleria', 'type' => 'widget', 'action' => 'category');
+
+		// delete extra
+		$db->delete('modules_extras', 'id = ? AND module = ? AND type = ? AND action = ?', array($extra['id'], $extra['module'], $extra['type'], $extra['action']));
+
+		// update blocks with this item linked
+		$db->update('pages_blocks', array('extra_id' => null, 'html' => ''), 'extra_id = ?', array($item['extra_id']));
+
 		// delete the widget
-		return (bool)BackendModel::getContainer()->get('database')->delete('galleria_categories', 'id = ?', array((int)$id));
+		return (bool)$db->delete('galleria_categories', 'id = ?', array((int)$id));
 	}
 
 	/**
@@ -307,7 +331,7 @@ class BackendGalleriaModel
 		$item['id'] = $db->insert('galleria_albums', $item);
 
 		// build extra for the gallery-widget
-		$extra = array('module' => 'galleria', 'type' => 'widget', 'label' => 'galleria', 'action' => 'gallery', 'data' => serialize(array('id' => $item['id'], 'extra_label' => "Gallery " . $item['title'], 'language' => $item['language'], 'edit_url' => BackendModel::createURLForAction('edit_album') . '&id=' . $item['id'])), 'hidden' => 'N', 'sequence' => $db->getVar('SELECT MAX(i.sequence) + 1
+		$extra = array('module' => 'galleria', 'type' => 'widget', 'label' => 'galleria', 'action' => 'gallery', 'data' => serialize(array('id' => $item['id'], 'extra_label' => "Gallery album " . $item['title'], 'language' => $item['language'], 'edit_url' => BackendModel::createURLForAction('edit_album') . '&id=' . $item['id'])), 'hidden' => 'N', 'sequence' => $db->getVar('SELECT MAX(i.sequence) + 1
 				 FROM modules_extras AS i
 				 WHERE i.module = ?', array('links')));
 
@@ -315,10 +339,10 @@ class BackendGalleriaModel
 			 FROM modules_extras AS i');
 
 		// insert extra gallery-widget
-		$item['extra_id'] = $db->insert('modules_extras', $extra);
+		$itemextra['extra_id_gallery'] = $db->insert('modules_extras', $extra);
 
 		// build extra for the slideshow-widget
-		$extra = array('module' => 'galleria', 'type' => 'widget', 'label' => 'galleria', 'action' => 'slideshow', 'data' => serialize(array('id' => $item['id'], 'extra_label' => "Slideshow " . $item['title'], 'language' => $item['language'], 'edit_url' => BackendModel::createURLForAction('edit_album') . '&id=' . $item['id'])), 'hidden' => 'N', 'sequence' => $db->getVar('SELECT MAX(i.sequence) + 1
+		$extra = array('module' => 'galleria', 'type' => 'widget', 'label' => 'galleria', 'action' => 'slideshow', 'data' => serialize(array('id' => $item['id'], 'extra_label' => "Slideshow album " . $item['title'], 'language' => $item['language'], 'edit_url' => BackendModel::createURLForAction('edit_album') . '&id=' . $item['id'])), 'hidden' => 'N', 'sequence' => $db->getVar('SELECT MAX(i.sequence) + 1
 				 FROM modules_extras AS i
 				 WHERE i.module = ?', array('links')));
 
@@ -326,9 +350,14 @@ class BackendGalleriaModel
 			 FROM modules_extras AS i');
 
 		// insert extra slideshow-widget
-		$item['extra_id'] = $db->insert('modules_extras', $extra);
+		$itemextra['extra_id_slideshow'] = $db->insert('modules_extras', $extra);
 
+		// update the item with the extras
+		$db->update('galleria_albums', $itemextra, 'id = ?', $item['id']);
+
+		// return the inserted id
 		return $item['id'];
+
 	}
 
 	/**
@@ -340,7 +369,28 @@ class BackendGalleriaModel
 	 */
 	public static function insertCategory(array $data)
 	{
-		return (int)BackendModel::getContainer()->get('database')->insert('galleria_categories', $data);
+
+		$db = BackendModel::getContainer()->get('database');
+
+		// insert and return the id
+		$item['id'] = $db->insert('galleria_categories', $data);
+
+		// build extra for the category-widget
+		$extra = array('module' => 'galleria', 'type' => 'widget', 'label' => 'galleria', 'action' => 'category', 'data' => serialize(array('id' => $item['id'], 'extra_label' => "Albums from category " . $data['title'], 'language' => $item['language'], 'edit_url' => BackendModel::createURLForAction('edit_album') . '&id=' . $item['id'])), 'hidden' => 'N', 'sequence' => $db->getVar('SELECT MAX(i.sequence) + 1
+				 FROM modules_extras AS i
+				 WHERE i.module = ?', array('links')));
+
+		if(is_null($extra['sequence'])) $extra['sequence'] = $db->getVar('SELECT CEILING(MAX(i.sequence) / 1000) * 1000
+			 FROM modules_extras AS i');
+
+		// insert extra gallery-widget
+		$itemextra['extra_id'] = $db->insert('modules_extras', $extra);
+
+		// update the category
+		$db->update('galleria_categories', $itemextra, 'id=?', $item['id']);
+
+		// return the id
+		return $item['id'];
 	}
 
 	/**
@@ -359,7 +409,7 @@ class BackendGalleriaModel
 
 		if(is_null($widget['sequence']))
 		{
-			$widget['sequence'] = $db->getVar('SELECT CEILING(MAX(i.sequence) 
+			$widget['sequence'] = $db->getVar('SELECT CEILING(MAX(i.sequence)
 			/ 1000) * 1000 FROM modules_extras AS i');
 		}
 
@@ -377,14 +427,27 @@ class BackendGalleriaModel
 	public static function updateAlbum(array $item)
 	{
 		$db = BackendModel::getContainer()->get('database');
-		if(isset($item['extra_id']))
+
+		// update extra id gallery
+		if(isset($item['extra_id_gallery']))
 		{
 			// build extra
-			$extra = array('id' => $item['extra_id'], 'module' => 'galleria', 'type' => 'widget', 'label' => 'galleria', 'action' => 'widget', 'data' => serialize(array('id' => $item['id'], 'extra_label' => $item['title'], 'language' => $item['language'], 'edit_url' => BackendModel::createURLForAction('edit_album') . '&id=' . $item['id'])), 'hidden' => 'N');
+			$extragallery = array('id' => $item['extra_id_gallery'], 'module' => 'galleria', 'type' => 'widget', 'label' => 'galleria', 'action' => 'gallery', 'data' => serialize(array('id' => $item['id'], 'extra_label' => 'Gallery album '.$item['title'], 'language' => $item['language'], 'edit_url' => BackendModel::createURLForAction('edit_album') . '&id=' . $item['id'])), 'hidden' => 'N');
 
 			// update extra
-			$db->update('modules_extras', $extra, 'id = ? ', array($item['extra_id']));
+			$db->update('modules_extras', $extragallery, 'id = ? ', array($item['extra_id_gallery']));
 		}
+
+		// update extra id slideshow
+		if(isset($item['extra_id_slideshow']))
+		{
+			// build extra
+			$extraslideshow = array('id' => $item['extra_id_slideshow'], 'module' => 'galleria', 'type' => 'widget', 'label' => 'galleria', 'action' => 'slideshow', 'data' => serialize(array('id' => $item['id'], 'extra_label' => 'Slideshow album '.$item['title'], 'language' => $item['language'], 'edit_url' => BackendModel::createURLForAction('edit_album') . '&id=' . $item['id'])), 'hidden' => 'N');
+
+			// update extra
+			$db->update('modules_extras', $extraslideshow, 'id = ? ', array($item['extra_id_slideshow']));
+		}
+
 		// update the category
 		$update = $db->update('galleria_albums', $item, 'id = ?', array($item['id']));
 
@@ -414,8 +477,32 @@ class BackendGalleriaModel
 	 */
 	public static function updateCategory(array $item)
 	{
-		return (bool)BackendModel::getContainer()->get('database')->update('galleria_categories', (array)$item, 'id = ?', array($item['id']));
+
+		$db = BackendModel::getContainer()->get('database');
+
+		// build extra
+		$extra = array('id' => $item['extra_id'], 'module' => 'galleria', 'type' => 'widget', 'label' => 'galleria', 'action' => 'category', 'data' => serialize(array('id' => $item['id'], 'extra_label' => "Albums from category ".$item['title'], 'language' => $item['language'], 'edit_url' => BackendModel::createURLForAction('edit_album') . '&id=' . $item['id'])), 'hidden' => 'N');
+
+		if(isset($item['extra_id']))
+		{
+			// update extra
+			$db->update('modules_extras', $extra, 'id = ? ', array($item['extra_id']));
+		} else {
+
+			if(is_null($extra['sequence'])) $extra['sequence'] = $db->getVar('SELECT CEILING(MAX(i.sequence) / 1000) * 1000
+				 FROM modules_extras AS i');
+
+			// insert extra gallery-widget
+			$item['extra_id'] = $db->insert('modules_extras', $extra);
+
+		}
+
+		// update the category
+		$update = $db->update('galleria_categories', (array)$item, 'id = ?', array($item['id']));
 		BackendModel::invalidateFrontendCache('galleria', BL::getWorkingLanguage());
+
+		// return the id
+		return $update;
 	}
 
 	/**
